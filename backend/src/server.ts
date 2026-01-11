@@ -13,6 +13,7 @@ import {
     Conversation,
 } from './conversation';
 import { Persona } from './agents/convincer';
+import { fetchOpenRouterModels, OPENAI_MODELS } from './openai';
 
 dotenv.config();
 
@@ -22,6 +23,24 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
+// Get available models (OpenAI + OpenRouter)
+app.get('/api/models', async (req, res) => {
+    try {
+        const openrouterModels = await fetchOpenRouterModels();
+
+        // Combine and dedupe (OpenAI models first)
+        const allModels = [
+            ...OPENAI_MODELS,
+            ...openrouterModels.filter(m => !m.id.startsWith('openai/')),
+        ];
+
+        res.json(allModels);
+    } catch (error) {
+        console.error('Error fetching models:', error);
+        res.json(OPENAI_MODELS); // Fallback to just OpenAI models
+    }
+});
+
 // Get available personas
 app.get('/api/personas', (req, res) => {
     res.json(PRESET_PERSONAS);
@@ -30,7 +49,7 @@ app.get('/api/personas', (req, res) => {
 // Create a new conversation
 app.post('/api/conversations', (req, res) => {
     try {
-        const { turnLimit = 10, personaId, customPersona, interrogatorModel, convincerModel } = req.body;
+        const { turnLimit = 10, personaId, customPersona, interrogatorModel, convincerModel, interrogatorStyle } = req.body;
 
         let persona: Persona | null = null;
 
@@ -52,6 +71,7 @@ app.post('/api/conversations', (req, res) => {
             persona,
             interrogatorModel,
             convincerModel,
+            interrogatorStyle,
         });
 
         res.json(sanitizeConversation(conversation));

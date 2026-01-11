@@ -41,6 +41,7 @@ export function ExperimentPage() {
         mode: ConversationMode;
         interrogatorModel: string;
         convincerModel: string;
+        interrogatorStyle: 'neutral' | 'aggressive' | 'casual' | 'philosophical' | 'tricky';
     }) => {
         setIsLoading(true);
         setError(null);
@@ -52,6 +53,7 @@ export function ExperimentPage() {
                 customPersona: config.customPersona,
                 interrogatorModel: config.interrogatorModel,
                 convincerModel: config.convincerModel,
+                interrogatorStyle: config.interrogatorStyle,
             });
             const startedConv = await api.startConversation(newConv.id);
             setConversation(startedConv);
@@ -136,9 +138,7 @@ export function ExperimentPage() {
                         transition={{ duration: 0.2 }}
                         className="flex flex-col h-[calc(100vh-140px)] bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden"
                     >
-                        {/* Fixed Header: Controls & Verdict */}
                         <div className="flex-none bg-zinc-50/50 border-b border-zinc-100 z-10">
-                            {/* Status Bar */}
                             <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100/50">
                                 <div className="space-y-1">
                                     <div className="flex items-center gap-2">
@@ -161,7 +161,6 @@ export function ExperimentPage() {
                                 />
                             </div>
 
-                            {/* Verdict (Sticky) */}
                             <AnimatePresence>
                                 {conversation.verdict && (
                                     <motion.div
@@ -177,7 +176,6 @@ export function ExperimentPage() {
                             </AnimatePresence>
                         </div>
 
-                        {/* Scrollable Chat Area */}
                         <div className="flex-1 overflow-y-auto p-6 bg-white safe-scrollbar">
                             <ChatWindow
                                 messages={conversation.messages}
@@ -189,7 +187,6 @@ export function ExperimentPage() {
                                 persona={conversation.config.persona}
                             />
 
-                            {/* Verdict Loading Indicator */}
                             <AnimatePresence>
                                 {isGeneratingVerdict && (
                                     <motion.div

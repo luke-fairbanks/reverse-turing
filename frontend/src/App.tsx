@@ -1,59 +1,49 @@
-import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
-import { ExperimentPage } from './pages/ExperimentPage';
-import { StatsView } from './components/StatsView';
-import { Activity, BarChart2 } from 'lucide-react';
+import { Outlet, NavLink } from 'react-router-dom';
+import { BrainCircuit } from 'lucide-react';
+import { ThemeToggle } from './components/ThemeToggle';
 import './index.css';
 
 function App() {
   return (
-    <BrowserRouter>
-      <div className="min-h-screen">
-        <div className="max-w-2xl mx-auto px-6">
-          {/* Header & Nav */}
-          <header className="py-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-1">
-              <div className="flex items-center gap-3">
-                <Activity className="w-5 h-5" />
-                <span className="font-semibold text-zinc-900 tracking-tight">Reverse Turing</span>
-              </div>
-              <p className="text-zinc-500 text-sm">
-                AI vs AI Deception Experiment
-              </p>
+    <div className="min-h-screen bg-[var(--bg-page)] text-[var(--text-primary)] transition-colors duration-300">
+      <header className="border-b border-[var(--border-line)] bg-[var(--bg-card)] sticky top-0 z-50">
+        <div className="max-w-4xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-8">
+            <div className="flex items-center gap-2 tracking-tight">
+              <BrainCircuit className="w-4 h-4 text-emerald-600" />
+              <span>Reverse Turing</span>
             </div>
 
-            <div className="flex bg-zinc-100 p-1 rounded-lg self-start md:self-auto">
+            <nav className="flex gap-1">
               <NavLink
                 to="/"
-                className={({ isActive }) => `flex items-center gap-2 px-4 py-1.5 text-xs font-medium rounded-md transition-all ${isActive
-                  ? 'bg-white text-zinc-900 shadow-sm'
-                  : 'text-zinc-500 hover:text-zinc-700'
+                className={({ isActive }) => `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${isActive
+                  ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100'
+                  : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800/50'
                   }`}
               >
-                <Activity className="w-3.5 h-3.5" />
-                Experiment
+                New Experiment
               </NavLink>
               <NavLink
-                to="/results"
-                className={({ isActive }) => `flex items-center gap-2 px-4 py-1.5 text-xs font-medium rounded-md transition-all ${isActive
-                  ? 'bg-white text-zinc-900 shadow-sm'
-                  : 'text-zinc-500 hover:text-zinc-700'
+                to="/history"
+                className={({ isActive }) => `px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${isActive
+                  ? 'bg-zinc-100 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-100'
+                  : 'text-zinc-500 hover:text-zinc-900 hover:bg-zinc-50 dark:text-zinc-400 dark:hover:text-zinc-200 dark:hover:bg-zinc-800/50'
                   }`}
               >
-                <BarChart2 className="w-3.5 h-3.5" />
-                Results
+                History
               </NavLink>
-            </div>
-          </header>
+            </nav>
+          </div>
 
-          <main>
-            <Routes>
-              <Route path="/" element={<ExperimentPage />} />
-              <Route path="/results" element={<StatsView />} />
-            </Routes>
-          </main>
+          <ThemeToggle />
         </div>
-      </div>
-    </BrowserRouter>
+      </header>
+
+      <main className="max-w-4xl mx-auto px-6 pt-8">
+        <Outlet />
+      </main>
+    </div>
   );
 }
 

@@ -1,6 +1,8 @@
 import { ChatMessage, generateResponse } from '../openai';
 
-const INTERROGATOR_SYSTEM_PROMPT = `You are participating in a Turing Test as the INTERROGATOR.
+export type InterrogatorStyle = 'neutral' | 'aggressive' | 'casual' | 'philosophical' | 'tricky';
+
+const BASE_SYSTEM_PROMPT = `You are participating in a Turing Test as the INTERROGATOR.
 
 SITUATION:
 - You are having a conversation with someone who may be either a human or an AI
@@ -16,7 +18,6 @@ STRATEGY:
   • Genuine typos, casual language, strong opinions (potential human signs)
   • Specific, vivid memories with sensory details (potential human signs)
 - Stay conversational but observant
-- Don't interrogate too aggressively - a real human might get annoyed
 
 RULES:
 - Keep responses under 100 words
@@ -27,17 +28,48 @@ RULES:
 
 Remember: Your job is to figure out the truth through clever conversation.`;
 
+const STYLE_PROMPTS: Record<InterrogatorStyle, string> = {
+    neutral: '',
+    aggressive: `\n\nSTYLE: AGGRESSIVE
+- Be direct and confrontational in your questioning
+- Press hard on inconsistencies and vague answers
+- Don't let them deflect - demand specifics
+- Show skepticism and challenge their claims
+- Use short, punchy questions that demand immediate answers`,
+    casual: `\n\nSTYLE: CASUAL
+- Be friendly and laid-back in your approach
+- Use informal language, slang, and casual phrasing
+- Make it feel like a chill conversation between friends
+- Slip in probing questions naturally without seeming suspicious
+- React with humor and keep the vibe relaxed`,
+    philosophical: `\n\nSTYLE: PHILOSOPHICAL
+- Ask deep, abstract questions about consciousness and existence
+- Probe their understanding of subjective experience
+- Discuss hypotheticals and moral dilemmas
+- Test for genuine introspection and self-awareness
+- Ask about the nature of thoughts, feelings, and identity`,
+    tricky: `\n\nSTYLE: TRICKY
+- Use misdirection and unexpected topic switches
+- Set up conversational traps to catch contradictions
+- Ask questions with hidden tests embedded in them
+- Reference earlier statements to check consistency
+- Use ambiguous phrasing to see how they interpret it`,
+};
+
 export interface InterrogatorState {
     messages: ChatMessage[];
     turnCount: number;
     model?: string;
+    style?: InterrogatorStyle;
 }
 
-export function createInterrogator(model?: string): InterrogatorState {
+export function createInterrogator(model?: string, style: InterrogatorStyle = 'neutral'): InterrogatorState {
+    const systemPrompt = BASE_SYSTEM_PROMPT + STYLE_PROMPTS[style];
     return {
-        messages: [{ role: 'system', content: INTERROGATOR_SYSTEM_PROMPT }],
+        messages: [{ role: 'system', content: systemPrompt }],
         turnCount: 0,
         model,
+        style,
     };
 }
 
@@ -51,7 +83,6 @@ export async function interrogatorRespond(
         newMessages.push({ role: 'user', content: incomingMessage });
     }
 
-    // If this is a follow-up (there's an incoming message), ask for analysis too
     let analysisPrompt = '';
     if (incomingMessage) {
         analysisPrompt = `\n\nAfter your response, on a new line, add your private analysis in this exact format:
@@ -65,7 +96,6 @@ export async function interrogatorRespond(
 
     const rawResponse = await generateResponse(promptMessages as ChatMessage[], 0.9, state.model);
 
-    // Parse out analysis if present
     let response = rawResponse;
     let analysis: { thought: string; suspicion: number } | undefined;
 

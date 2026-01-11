@@ -4,9 +4,8 @@ export interface Message {
     content: string;
     timestamp: number;
     agent?: 'interrogator' | 'convincer';
-    // New fields for live analysis
     internalThought?: string;
-    suspicionScore?: number; // 0-100
+    suspicionScore?: number;
 }
 
 export interface Persona {
@@ -18,11 +17,14 @@ export interface Persona {
     quirk: string;
 }
 
+export type InterrogatorStyle = 'neutral' | 'aggressive' | 'casual' | 'philosophical' | 'tricky';
+
 export interface ConversationConfig {
     turnLimit: number;
     persona: Persona | null;
     interrogatorModel?: string;
     convincerModel?: string;
+    interrogatorStyle?: InterrogatorStyle;
 }
 
 export interface Conversation {

@@ -11,7 +11,6 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children }: ModalProps) {
-    // Prevent body scroll when modal is open
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
@@ -29,7 +28,6 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
         <AnimatePresence>
             {isOpen && (
                 <>
-                    {/* Backdrop */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -37,26 +35,22 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
                         onClick={onClose}
                         className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 md:p-6"
                     >
-                        {/* Modal Content */}
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 10 }}
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 10 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white w-full max-w-2xl max-h-[85vh] rounded-xl shadow-2xl flex flex-col overflow-hidden"
+                            className="bg-white dark:bg-zinc-900 w-full max-w-2xl max-h-[85vh] rounded-xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-zinc-900/5 dark:ring-white/10"
                         >
-                            {/* Header */}
-                            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100">
-                                <h3 className="font-semibold text-zinc-900">{title || 'View Details'}</h3>
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-800">
+                                <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">{title || 'View Details'}</h3>
                                 <button
                                     onClick={onClose}
-                                    className="p-1 rounded-md text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors"
+                                    className="p-1 rounded-md text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors"
                                 >
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
-
-                            {/* Body */}
                             <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
                                 {children}
                             </div>

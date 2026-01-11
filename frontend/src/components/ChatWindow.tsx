@@ -13,7 +13,7 @@ interface ChatWindowProps {
     persona?: Persona | null;
 }
 
-export function ChatWindow({ messages, isLoading, currentTurn, maxTurns, className, interrogatorModel, convincerModel, persona }: ChatWindowProps) {
+export function ChatWindow({ messages, isLoading, className, interrogatorModel, convincerModel, persona }: ChatWindowProps) {
     const bottomRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -22,11 +22,10 @@ export function ChatWindow({ messages, isLoading, currentTurn, maxTurns, classNa
 
     return (
         <div className={`space-y-6 ${className}`}>
-            {/* Messages */}
             <div className="space-y-6">
                 {messages.length === 0 ? (
                     <div className="py-20 text-center">
-                        <p className="text-zinc-300 text-sm">Conversation thread empty</p>
+                        <p className="text-zinc-300 dark:text-zinc-600 text-sm">Conversation thread empty</p>
                     </div>
                 ) : (
                     messages.map((message, index) => (
@@ -43,11 +42,11 @@ export function ChatWindow({ messages, isLoading, currentTurn, maxTurns, classNa
 
                 {isLoading && (
                     <div className="flex gap-3">
-                        <div className="w-8 h-8 rounded-full bg-zinc-100" />
+                        <div className="w-8 h-8 rounded-full bg-zinc-100 dark:bg-zinc-800" />
                         <div className="flex gap-1 items-center h-8">
-                            <span className="w-1.5 h-1.5 bg-zinc-300 rounded-full animate-bounce delay-0" />
-                            <span className="w-1.5 h-1.5 bg-zinc-300 rounded-full animate-bounce delay-150" />
-                            <span className="w-1.5 h-1.5 bg-zinc-300 rounded-full animate-bounce delay-300" />
+                            <span className="w-1.5 h-1.5 bg-zinc-300 dark:bg-zinc-600 rounded-full animate-bounce delay-0" />
+                            <span className="w-1.5 h-1.5 bg-zinc-300 dark:bg-zinc-600 rounded-full animate-bounce delay-150" />
+                            <span className="w-1.5 h-1.5 bg-zinc-300 dark:bg-zinc-600 rounded-full animate-bounce delay-300" />
                         </div>
                     </div>
                 )}

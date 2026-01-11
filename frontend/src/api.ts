@@ -1,8 +1,20 @@
 const API_BASE = '/api';
 
+export interface ModelInfo {
+    id: string;
+    name: string;
+    provider: string;
+}
+
 export async function fetchPersonas() {
     const res = await fetch(`${API_BASE}/personas`);
     if (!res.ok) throw new Error('Failed to fetch personas');
+    return res.json();
+}
+
+export async function fetchModels(): Promise<ModelInfo[]> {
+    const res = await fetch(`${API_BASE}/models`);
+    if (!res.ok) throw new Error('Failed to fetch models');
     return res.json();
 }
 
@@ -18,6 +30,7 @@ export async function createConversation(params: {
     };
     interrogatorModel?: string;
     convincerModel?: string;
+    interrogatorStyle?: 'neutral' | 'aggressive' | 'casual' | 'philosophical' | 'tricky';
 }) {
     const res = await fetch(`${API_BASE}/conversations`, {
         method: 'POST',
