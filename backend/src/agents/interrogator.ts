@@ -63,8 +63,31 @@ export interface InterrogatorState {
     style?: InterrogatorStyle;
 }
 
-export function createInterrogator(model?: string, style: InterrogatorStyle = 'neutral'): InterrogatorState {
-    const systemPrompt = BASE_SYSTEM_PROMPT + STYLE_PROMPTS[style];
+export interface LearnedPattern {
+    name: string;
+    count: number;
+    description: string;
+}
+
+function buildPatternPrompt(patterns: LearnedPattern[]): string {
+    if (patterns.length === 0) return '';
+
+    const patternLines = patterns.slice(0, 8).map(
+        (p, i) => `${i + 1}. ${p.name} (detected ${p.count}x) - ${p.description}`
+    ).join('\n');
+
+    return `\n\nPATTERNS TO WATCH FOR (learned from past experiments):
+${patternLines}
+
+If you detect these patterns, probe deeper, challenge them, or ask follow-up questions to expose inconsistencies.`;
+}
+
+export function createInterrogator(
+    model?: string,
+    style: InterrogatorStyle = 'neutral',
+    learnedPatterns: LearnedPattern[] = []
+): InterrogatorState {
+    const systemPrompt = BASE_SYSTEM_PROMPT + STYLE_PROMPTS[style] + buildPatternPrompt(learnedPatterns);
     return {
         messages: [{ role: 'system', content: systemPrompt }],
         turnCount: 0,

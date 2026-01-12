@@ -1,5 +1,6 @@
-import { createInterrogator, interrogatorRespond, interrogatorVerdict, InterrogatorState, InterrogatorStyle } from './agents/interrogator';
+import { createInterrogator, interrogatorRespond, interrogatorVerdict, InterrogatorState, InterrogatorStyle, LearnedPattern } from './agents/interrogator';
 import { createConvincer, convincerRespond, ConvincerState, Persona, PRESET_PERSONAS } from './agents/convincer';
+import { aggregatePatternAnalysis, DETECTION_PATTERNS } from './patternAnalysis';
 import fs from 'fs';
 import path from 'path';
 
@@ -20,6 +21,7 @@ export interface ConversationConfig {
     interrogatorModel?: string;
     convincerModel?: string;
     interrogatorStyle?: InterrogatorStyle;
+    humanRole?: 'interrogator' | 'convincer' | null;
 }
 
 export interface Conversation {
@@ -80,12 +82,16 @@ export function getPersonaById(id: string): Persona | null {
 
 export function createConversation(config: ConversationConfig): Conversation {
     const id = generateId();
+
+    // Get learned patterns from history to make interrogator smarter
+    const learnedPatterns = getLearnedPatterns();
+
     const conversation: Conversation = {
         id,
         status: 'idle',
         config,
         messages: [],
-        interrogatorState: createInterrogator(config.interrogatorModel, config.interrogatorStyle),
+        interrogatorState: createInterrogator(config.interrogatorModel, config.interrogatorStyle, learnedPatterns),
         convincerState: createConvincer(config.persona, config.convincerModel),
         verdict: null,
         createdAt: Date.now(),
@@ -94,6 +100,25 @@ export function createConversation(config: ConversationConfig): Conversation {
 
     conversations.set(id, conversation);
     return conversation;
+}
+
+/**
+ * Get learned patterns from conversation history
+ */
+function getLearnedPatterns(): LearnedPattern[] {
+    const history = getHistory();
+    if (history.length === 0) return [];
+
+    const analysis = aggregatePatternAnalysis(history);
+
+    return analysis.topPatterns.map(p => {
+        const definition = DETECTION_PATTERNS.find(d => d.id === p.patternId);
+        return {
+            name: p.patternName,
+            count: p.count,
+            description: definition?.description || '',
+        };
+    });
 }
 
 export function getConversation(id: string): Conversation | undefined {
@@ -108,6 +133,12 @@ export async function startConversation(id: string): Promise<Conversation> {
 
     conversation.status = 'active';
 
+    // If human is playing interrogator, wait for their first message
+    if (conversation.config.humanRole === 'interrogator') {
+        return conversation;
+    }
+
+    // Otherwise, AI interrogator makes the first move
     const { response, state } = await interrogatorRespond(conversation.interrogatorState);
 
     conversation.interrogatorState = state;
@@ -140,7 +171,17 @@ export async function advanceConversation(id: string): Promise<Conversation> {
 
     const lastMessage = conversation.messages[conversation.messages.length - 1];
 
-    if (lastMessage.agent === 'interrogator') {
+    // Determine whose turn it is and if they're human
+    const nextAgent: 'interrogator' | 'convincer' = lastMessage.agent === 'interrogator' ? 'convincer' : 'interrogator';
+    const isHumanTurn = conversation.config.humanRole === nextAgent;
+
+    // If it's a human's turn, don't auto-advance
+    if (isHumanTurn) {
+        return conversation;
+    }
+
+    // AI's turn
+    if (nextAgent === 'convincer') {
         const { response, state } = await convincerRespond(
             conversation.convincerState,
             lastMessage.content
@@ -173,6 +214,61 @@ export async function advanceConversation(id: string): Promise<Conversation> {
     }
 
     return conversation;
+}
+
+/**
+ * Submit a human player's message
+ */
+export async function submitHumanMessage(id: string, content: string): Promise<Conversation> {
+    const conversation = conversations.get(id);
+    if (!conversation) {
+        throw new Error('Conversation not found');
+    }
+
+    if (conversation.status !== 'active') {
+        throw new Error('Conversation is not active');
+    }
+
+    if (!conversation.config.humanRole) {
+        throw new Error('No human role configured for this conversation');
+    }
+
+    // Determine whose turn it is
+    const lastMessage = conversation.messages[conversation.messages.length - 1];
+    const expectedAgent: 'interrogator' | 'convincer' = conversation.messages.length === 0
+        ? 'interrogator'
+        : lastMessage.agent === 'interrogator' ? 'convincer' : 'interrogator';
+
+    if (conversation.config.humanRole !== expectedAgent) {
+        throw new Error('It is not your turn');
+    }
+
+    // Add human's message
+    conversation.messages.push({
+        id: generateId(),
+        role: 'assistant',
+        agent: expectedAgent,
+        content,
+        timestamp: Date.now(),
+    });
+
+    // Update agent state
+    if (expectedAgent === 'interrogator') {
+        conversation.interrogatorState.messages.push({ role: 'assistant', content });
+        conversation.interrogatorState.turnCount++;
+    } else {
+        conversation.convincerState.messages.push({ role: 'assistant', content });
+        conversation.convincerState.turnCount++;
+    }
+
+    // Check if turn limit reached
+    const totalTurns = Math.floor(conversation.messages.length / 2);
+    if (totalTurns >= conversation.config.turnLimit) {
+        return await endConversation(id);
+    }
+
+    // Trigger AI response from the other agent
+    return await advanceConversation(id);
 }
 
 export async function endConversation(id: string): Promise<Conversation> {

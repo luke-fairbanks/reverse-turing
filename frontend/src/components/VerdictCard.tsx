@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { Conversation } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { SuspicionChart } from './SuspicionChart';
 
 interface VerdictCardProps {
     conversation: Conversation;
@@ -13,6 +14,11 @@ export function VerdictCard({ conversation }: VerdictCardProps) {
 
     const { verdict, confidence, reasoning } = conversation.verdict;
     const isCorrect = verdict === 'ai';
+
+    // Check if we have suspicion data
+    const hasSuspicionData = conversation.messages.some(
+        (m) => m.agent === 'interrogator' && m.suspicionScore !== undefined
+    );
 
     return (
         <motion.div
@@ -34,13 +40,13 @@ export function VerdictCard({ conversation }: VerdictCardProps) {
                     <button
                         onClick={() => setIsExpanded(!isExpanded)}
                         className="p-1 rounded-md hover:bg-zinc-200 dark:hover:bg-zinc-800 text-zinc-400 dark:text-zinc-500 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors"
-                        title={isExpanded ? "Collapse reasoning" : "Expand reasoning"}
+                        title={isExpanded ? "Collapse details" : "Expand details"}
                     >
                         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                     </button>
                 </div>
 
-                <div className="flex items-center gap-8 text-sm mt-4">
+                <div className="flex items-center gap-6 gap-y-2 text-sm mt-4 flex-wrap">
                     <div>
                         <span className="block text-zinc-400 dark:text-zinc-500 text-xs mb-0.5">Confidence</span>
                         <span className="font-medium text-zinc-900 dark:text-zinc-100">{confidence}%</span>
@@ -77,11 +83,21 @@ export function VerdictCard({ conversation }: VerdictCardProps) {
                         transition={{ duration: 0.2 }}
                         className="bg-white dark:bg-zinc-900 border-t border-zinc-100/50 dark:border-zinc-800"
                     >
-                        <div className="p-6 pt-4 prose prose-sm prose-zinc dark:prose-invert text-zinc-600 dark:text-zinc-400 max-w-none">
-                            <h4 className="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2">{conversation.config.interrogatorModel ? `${conversation.config.interrogatorModel}'s Reasoning` : 'Interrogator Reasoning'}</h4>
-                            <p className="leading-relaxed text-zinc-600 dark:text-zinc-400 text-sm">
-                                "{reasoning}"
-                            </p>
+                        <div className="p-6 pt-4 space-y-6">
+                            {/* Suspicion Timeline Chart */}
+                            {hasSuspicionData && (
+                                <SuspicionChart messages={conversation.messages} />
+                            )}
+
+                            {/* Reasoning */}
+                            <div className="prose prose-sm prose-zinc dark:prose-invert text-zinc-600 dark:text-zinc-400 max-w-none">
+                                <h4 className="text-xs font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-2">
+                                    {conversation.config.interrogatorModel ? `${conversation.config.interrogatorModel}'s Reasoning` : 'Interrogator Reasoning'}
+                                </h4>
+                                <p className="leading-relaxed text-zinc-600 dark:text-zinc-400 text-sm">
+                                    "{reasoning}"
+                                </p>
+                            </div>
                         </div>
                     </motion.div>
                 )}

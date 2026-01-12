@@ -8,9 +8,10 @@ interface ModalProps {
     onClose: () => void;
     title?: string;
     children: React.ReactNode;
+    size?: 'default' | 'wide';
 }
 
-export function Modal({ isOpen, onClose, title, children }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'default' }: ModalProps) {
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
@@ -23,6 +24,10 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
     }, [isOpen]);
 
     if (!isOpen) return null;
+
+    const sizeClasses = size === 'wide'
+        ? 'max-w-6xl w-[95vw]'
+        : 'max-w-2xl w-full';
 
     return createPortal(
         <AnimatePresence>
@@ -40,9 +45,9 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: 10 }}
                             onClick={(e) => e.stopPropagation()}
-                            className="bg-white dark:bg-zinc-900 w-full max-w-2xl max-h-[85vh] rounded-xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-zinc-900/5 dark:ring-white/10"
+                            className={`bg-white dark:bg-zinc-900 ${sizeClasses} max-h-[90vh] rounded-xl shadow-2xl flex flex-col overflow-hidden ring-1 ring-zinc-900/5 dark:ring-white/10`}
                         >
-                            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-800">
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 dark:border-zinc-800 flex-none">
                                 <h3 className="font-semibold text-zinc-900 dark:text-zinc-100">{title || 'View Details'}</h3>
                                 <button
                                     onClick={onClose}

@@ -6,6 +6,7 @@ import {
     getConversation,
     startConversation,
     advanceConversation,
+    submitHumanMessage,
     endConversation,
     getHistory,
     getPersonaById,
@@ -14,6 +15,7 @@ import {
 } from './conversation';
 import { Persona } from './agents/convincer';
 import { fetchOpenRouterModels, OPENAI_MODELS } from './openai';
+import { aggregatePatternAnalysis, DETECTION_PATTERNS } from './patternAnalysis';
 
 dotenv.config();
 
@@ -49,7 +51,7 @@ app.get('/api/personas', (req, res) => {
 // Create a new conversation
 app.post('/api/conversations', (req, res) => {
     try {
-        const { turnLimit = 10, personaId, customPersona, interrogatorModel, convincerModel, interrogatorStyle } = req.body;
+        const { turnLimit = 10, personaId, customPersona, interrogatorModel, convincerModel, interrogatorStyle, humanRole } = req.body;
 
         let persona: Persona | null = null;
 
@@ -72,6 +74,7 @@ app.post('/api/conversations', (req, res) => {
             interrogatorModel,
             convincerModel,
             interrogatorStyle,
+            humanRole: humanRole || null,
         });
 
         res.json(sanitizeConversation(conversation));
@@ -103,6 +106,21 @@ app.post('/api/conversations/:id/advance', async (req, res) => {
     }
 });
 
+// Submit a human player's message
+app.post('/api/conversations/:id/message', async (req, res) => {
+    try {
+        const { content } = req.body;
+        if (!content || typeof content !== 'string') {
+            return res.status(400).json({ error: 'Message content is required' });
+        }
+        const conversation = await submitHumanMessage(req.params.id, content.trim());
+        res.json(sanitizeConversation(conversation));
+    } catch (error) {
+        console.error('Error submitting message:', error);
+        res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to submit message' });
+    }
+});
+
 // End conversation and get verdict
 app.post('/api/conversations/:id/end', async (req, res) => {
     try {
@@ -127,6 +145,33 @@ app.get('/api/conversations/:id', (req, res) => {
 app.get('/api/history', (req, res) => {
     const history = getHistory();
     res.json(history.map(sanitizeConversation));
+});
+
+// Get pattern analysis across all conversations
+app.get('/api/patterns', (req, res) => {
+    try {
+        const history = getHistory();
+        const analysis = aggregatePatternAnalysis(history);
+
+        // Add pattern definitions for frontend display
+        const patternsWithMeta = analysis.topPatterns.map(p => {
+            const definition = DETECTION_PATTERNS.find(d => d.id === p.patternId);
+            return {
+                ...p,
+                description: definition?.description || '',
+                category: definition?.category || 'unknown',
+            };
+        });
+
+        res.json({
+            ...analysis,
+            topPatterns: patternsWithMeta,
+            totalConversations: history.length,
+        });
+    } catch (error) {
+        console.error('Error analyzing patterns:', error);
+        res.status(500).json({ error: 'Failed to analyze patterns' });
+    }
 });
 
 // Remove internal state from response

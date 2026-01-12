@@ -31,6 +31,7 @@ export async function createConversation(params: {
     interrogatorModel?: string;
     convincerModel?: string;
     interrogatorStyle?: 'neutral' | 'aggressive' | 'casual' | 'philosophical' | 'tricky';
+    humanRole?: 'interrogator' | 'convincer' | null;
 }) {
     const res = await fetch(`${API_BASE}/conversations`, {
         method: 'POST',
@@ -65,6 +66,19 @@ export async function endConversation(id: string) {
     return res.json();
 }
 
+export async function submitMessage(id: string, content: string) {
+    const res = await fetch(`${API_BASE}/conversations/${id}/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+    });
+    if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to submit message');
+    }
+    return res.json();
+}
+
 export async function getConversation(id: string) {
     const res = await fetch(`${API_BASE}/conversations/${id}`);
     if (!res.ok) throw new Error('Failed to get conversation');
@@ -76,3 +90,26 @@ export async function getHistory() {
     if (!res.ok) throw new Error('Failed to get history');
     return res.json();
 }
+
+export interface PatternMatch {
+    patternId: string;
+    patternName: string;
+    count: number;
+    examples: string[];
+    description: string;
+    category: string;
+}
+
+export interface PatternAnalysis {
+    totalPatterns: number;
+    matchesByCategory: Record<string, number>;
+    topPatterns: PatternMatch[];
+    totalConversations: number;
+}
+
+export async function getPatterns(): Promise<PatternAnalysis> {
+    const res = await fetch(`${API_BASE}/patterns`);
+    if (!res.ok) throw new Error('Failed to get patterns');
+    return res.json();
+}
+

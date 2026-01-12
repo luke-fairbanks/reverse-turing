@@ -14,6 +14,7 @@ interface SetupPanelProps {
         interrogatorModel: string;
         convincerModel: string;
         interrogatorStyle: InterrogatorStyle;
+        humanRole?: 'interrogator' | 'convincer' | null;
     }) => void;
     isLoading: boolean;
 }
@@ -26,6 +27,7 @@ export function SetupPanel({ personas, onStart, isLoading }: SetupPanelProps) {
     const [interrogatorModel, setInterrogatorModel] = useState('gpt-4o-mini');
     const [convincerModel, setConvincerModel] = useState('gpt-4o-mini');
     const [interrogatorStyle, setInterrogatorStyle] = useState<InterrogatorStyle>('neutral');
+    const [humanRole, setHumanRole] = useState<'observer' | 'interrogator' | 'convincer'>('observer');
     const [availableModels, setAvailableModels] = useState<api.ModelInfo[]>([]);
     const [modelsLoading, setModelsLoading] = useState(true);
     const [customPersona, setCustomPersona] = useState({
@@ -57,6 +59,7 @@ export function SetupPanel({ personas, onStart, isLoading }: SetupPanelProps) {
             interrogatorModel,
             convincerModel,
             interrogatorStyle,
+            humanRole: humanRole === 'observer' ? null : humanRole,
         };
 
         if (personaType === 'preset' && selectedPersonaId) {
@@ -116,6 +119,48 @@ export function SetupPanel({ personas, onStart, isLoading }: SetupPanelProps) {
                             <span className="text-sm font-mono font-medium text-zinc-600 dark:text-zinc-400 w-8 text-right">{turnLimit}</span>
                         </div>
                     </div>
+                </div>
+
+                {/* Play As */}
+                <div className="space-y-2">
+                    <label className="text-sm font-medium text-zinc-900 dark:text-zinc-300 block">Play As</label>
+                    <div className="grid grid-cols-3 gap-2 p-1 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+                        <button
+                            type="button"
+                            onClick={() => setHumanRole('observer')}
+                            className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${humanRole === 'observer'
+                                    ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                                }`}
+                        >
+                            👁️ Observer
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setHumanRole('interrogator')}
+                            className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${humanRole === 'interrogator'
+                                    ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                                }`}
+                        >
+                            🔍 Interrogator
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setHumanRole('convincer')}
+                            className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${humanRole === 'convincer'
+                                    ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-zinc-100 shadow-sm'
+                                    : 'text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-200'
+                                }`}
+                        >
+                            🎭 Convincer
+                        </button>
+                    </div>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                        {humanRole === 'observer' && 'Watch two AIs compete in a Turing test'}
+                        {humanRole === 'interrogator' && 'Try to detect the AI by questioning it'}
+                        {humanRole === 'convincer' && 'Convince the AI you\'re human'}
+                    </p>
                 </div>
 
                 {/* Model Selectors */}

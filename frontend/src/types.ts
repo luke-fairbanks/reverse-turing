@@ -25,6 +25,7 @@ export interface ConversationConfig {
     interrogatorModel?: string;
     convincerModel?: string;
     interrogatorStyle?: InterrogatorStyle;
+    humanRole?: 'interrogator' | 'convincer' | null;
 }
 
 export interface Conversation {

@@ -99,6 +99,7 @@ export const OPENAI_MODELS = [
     { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'openai' },
     { id: 'o1', name: 'o1', provider: 'openai' },
     { id: 'o1-mini', name: 'o1 Mini', provider: 'openai' },
+    { id: 'gpt-5.2', name: 'GPT-5.2', provider: 'openai' },
 ];
 
 export default openaiClient;
